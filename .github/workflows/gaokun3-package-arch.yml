@@ -63,6 +63,7 @@ jobs:
           sudo docker run --rm \
             -v "$GITHUB_WORKSPACE":"$GITHUB_WORKSPACE" \
             -w "$GITHUB_WORKSPACE" \
+            -e GITHUB_WORKSPACE="$GITHUB_WORKSPACE" \
             -e GAOKUN_DIR="$GAOKUN_DIR" \
             -e WORKDIR="$WORKDIR" \
             -e KERN_SRC="$KERN_SRC" \

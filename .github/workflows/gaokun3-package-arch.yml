@@ -78,7 +78,7 @@ jobs:
               useradd -m -G wheel pkgbuilder 2>/dev/null || true
               echo "pkgbuilder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
               chown -R pkgbuilder:pkgbuilder "$GITHUB_WORKSPACE"
-              su - pkgbuilder -c "cd $GITHUB_WORKSPACE && bash scripts/ci/70_build_package_arch.sh --package-only"
+              su - pkgbuilder -c "export GAOKUN_DIR='$GAOKUN_DIR' WORKDIR='$WORKDIR' KERN_SRC='$KERN_SRC' KERN_OUT='$KERN_OUT' ARTIFACT_DIR='$ARTIFACT_DIR' KERNEL_TAG='$KERNEL_TAG' PKGVER='$PKGVER' PKGREL='$PKGREL' && cd '$GITHUB_WORKSPACE' && bash scripts/ci/70_build_package_arch.sh --package-only"
             '
 
       - name: Upload kernel package

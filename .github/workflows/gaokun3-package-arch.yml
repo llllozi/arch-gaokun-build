@@ -75,10 +75,10 @@ jobs:
             bash -euxo pipefail -c '
               pacman -Syu --noconfirm
               pacman -S --noconfirm --needed base-devel
-              useradd -m -G wheel builder
-              echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-              chown -R builder:builder "$GITHUB_WORKSPACE"
-              su - builder -c "cd $GITHUB_WORKSPACE && bash scripts/ci/70_build_package_arch.sh --package-only"
+              useradd -m -G wheel pkgbuilder 2>/dev/null || true
+              echo "pkgbuilder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+              chown -R pkgbuilder:pkgbuilder "$GITHUB_WORKSPACE"
+              su - pkgbuilder -c "cd $GITHUB_WORKSPACE && bash scripts/ci/70_build_package_arch.sh --package-only"
             '
 
       - name: Upload kernel package

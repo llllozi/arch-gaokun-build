@@ -93,10 +93,12 @@ checkout_kernel_source() {
             "${KERN_SRC}"
     fi
 
-    # Verify checkout
+    # Configure git user for patch application
     cd "${KERN_SRC}"
-    log_info "Checked out kernel version: $(make kernelversion)"
-    log_info "Kernel release: $(make kernelrelease)"
+    git config user.name "builder" || true
+    git config user.email "builder@localhost" || true
+
+    log_info "Kernel source ready at ${KERNEL_TAG}"
 }
 
 # ============================================================================

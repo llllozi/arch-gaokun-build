@@ -48,6 +48,11 @@ jobs:
           ref: ${{ inputs.kernel_tag }}
           path: linux-src
 
+      - name: Configure git for patch application
+        run: |
+          git -C linux-src config user.name "github-actions[bot]"
+          git -C linux-src config user.email "github-actions[bot]@users.noreply.github.com"
+
       - name: Build kernel packages
         run: |
           mkdir -p ${{ env.WORKDIR }} ${{ env.KERN_OUT }} ${{ env.ARTIFACT_DIR }}

@@ -71,12 +71,14 @@ jobs:
             -e KERNEL_TAG="$KERNEL_TAG" \
             -e PKGVER="7.0.rc5" \
             -e PKGREL="1" \
-            --user root \
             "manjarolinux/base:latest" \
             bash -euxo pipefail -c '
               pacman -Syu --noconfirm
               pacman -S --noconfirm --needed base-devel
-              bash scripts/ci/70_build_package_arch.sh --package-only
+              useradd -m -G wheel builder
+              echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+              chown -R builder:builder "$GITHUB_WORKSPACE"
+              su - builder -c "cd $GITHUB_WORKSPACE && bash scripts/ci/70_build_package_arch.sh --package-only"
             '
 
       - name: Upload kernel package

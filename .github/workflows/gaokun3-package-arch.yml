@@ -53,10 +53,31 @@ jobs:
           git -C linux-src config user.name "github-actions[bot]"
           git -C linux-src config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Build kernel packages
+      - name: Build kernel and collect artifacts
         run: |
           mkdir -p ${{ env.WORKDIR }} ${{ env.KERN_OUT }} ${{ env.ARTIFACT_DIR }}
-          bash scripts/ci/70_build_package_arch.sh
+          bash scripts/ci/70_build_package_arch.sh --build-only
+
+      - name: Create Arch packages in Docker
+        run: |
+          sudo docker run --rm \
+            -v "$GITHUB_WORKSPACE":"$GITHUB_WORKSPACE" \
+            -w "$GITHUB_WORKSPACE" \
+            -e GAOKUN_DIR="$GAOKUN_DIR" \
+            -e WORKDIR="$WORKDIR" \
+            -e KERN_SRC="$KERN_SRC" \
+            -e KERN_OUT="$KERN_OUT" \
+            -e ARTIFACT_DIR="$ARTIFACT_DIR" \
+            -e KERNEL_TAG="$KERNEL_TAG" \
+            -e PKGVER="7.0.rc5" \
+            -e PKGREL="1" \
+            --user root \
+            "archlinux:latest" \
+            bash -euxo pipefail -c '
+              pacman -Syu --noconfirm
+              pacman -S --noconfirm --needed base-devel
+              bash scripts/ci/70_build_package_arch.sh --package-only
+            '
 
       - name: Upload kernel package
         uses: actions/upload-artifact@v4

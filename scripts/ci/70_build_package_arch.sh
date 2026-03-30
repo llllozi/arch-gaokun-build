@@ -516,7 +516,9 @@ upload_artifacts() {
 main() {
     log_section "Starting Gaokun Kernel Build for Arch Linux"
 
-    # Parse arguments
+    BUILD_ONLY=false
+    PACKAGE_ONLY=false
+
     while [ $# -gt 0 ]; do
         case "$1" in
             --kernel-tag)
@@ -535,6 +537,14 @@ main() {
                 cleanup_workdir
                 shift
                 ;;
+            --build-only)
+                BUILD_ONLY=true
+                shift
+                ;;
+            --package-only)
+                PACKAGE_ONLY=true
+                shift
+                ;;
             --help)
                 echo "Usage: $0 [OPTIONS]"
                 echo "Options:"
@@ -542,6 +552,8 @@ main() {
                 echo "  --pkgver VERSION  Package version (default: 7.0.rc5)"
                 echo "  --pkgrel RELEASE  Package release (default: 1)"
                 echo "  --clean           Clean work directory before build"
+                echo "  --build-only      Build kernel only, skip packaging"
+                echo "  --package-only    Package only, skip kernel build"
                 echo "  --help            Show this help message"
                 exit 0
                 ;;
@@ -558,23 +570,34 @@ main() {
     log_info "  PKGREL: ${PKGREL}"
     log_info "  WORKDIR: ${WORKDIR}"
     log_info "  NPROC: ${NPROC}"
+    log_info "  BUILD_ONLY: ${BUILD_ONLY}"
+    log_info "  PACKAGE_ONLY: ${PACKAGE_ONLY}"
 
-    # Execute build steps
-    setup_workdir
-    checkout_kernel_source
-    apply_patches
-    configure_kernel
-    build_kernel
-    build_modules
-    collect_artifacts
-    create_arch_packages
-    upload_artifacts
+    if [ "$PACKAGE_ONLY" = true ]; then
+        create_arch_packages
+        log_section "Package Creation Completed Successfully"
+        log_info "Packages available at: ${ARTIFACT_DIR}"
+        ls -la "${ARTIFACT_DIR}/"
+    else
+        setup_workdir
+        checkout_kernel_source
+        apply_patches
+        configure_kernel
+        build_kernel
+        build_modules
+        collect_artifacts
 
-    log_section "Build Completed Successfully"
-
-    log_info "Packages available at: ${ARTIFACT_DIR}"
-    ls -la "${ARTIFACT_DIR}/"
+        if [ "$BUILD_ONLY" = true ]; then
+            log_section "Build Phase Completed Successfully"
+            log_info "Artifacts available at: ${KERN_OUT}"
+        else
+            create_arch_packages
+            upload_artifacts
+            log_section "Build Completed Successfully"
+            log_info "Packages available at: ${ARTIFACT_DIR}"
+            ls -la "${ARTIFACT_DIR}/"
+        fi
+    fi
 }
 
-# Run main function
 main "$@"

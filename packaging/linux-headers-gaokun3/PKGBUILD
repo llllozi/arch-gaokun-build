@@ -1,0 +1,77 @@
+# Maintainer: Gaokun Linux Team <gaokun@example.com>
+# Contributor: Buildbot <buildbot@example.com>
+
+pkgname=linux-headers-gaokun3
+pkgver=7.0.rc5
+pkgrel=1
+pkgdesc="Headers and scripts for building modules for the Linux kernel for Gaokun devices"
+arch=('aarch64')
+url="https://github.com/gaokun/linux"
+license=('GPL2')
+depends=('linux-gaokun3')
+makedepends=('bc' 'kmod' 'libelf' 'cpio' 'perl' 'tar' 'xz')
+provides=('linux-headers-gaokun3')
+conflicts=('linux-headers-gaokun3-git')
+
+# Source will be set by buildbot during build
+source=()
+sha256sums=()
+
+# Kernel version - will be extracted during build
+_kernver="${pkgver}-gaokun3"
+
+prepare() {
+    # Buildbot will handle source preparation
+    :
+}
+
+build() {
+    # Buildbot compiles the kernel externally
+    # This PKGBUILD is for packaging pre-built artifacts
+    :
+}
+
+package() {
+    local _kernver="${pkgver}-gaokun3"
+    local _builddir="${pkgdir}/usr/src/kernels/${_kernver}"
+    
+    # Create headers directory
+    mkdir -p "${_builddir}"
+    
+    # Install kernel headers
+    if [ -d "${srcdir}/headers" ]; then
+        cp -r "${srcdir}/headers/"* "${_builddir}/"
+    fi
+    
+    # Install kernel config
+    if [ -f "${srcdir}/.config" ]; then
+        install -Dm644 "${srcdir}/.config" "${_builddir}/.config"
+    fi
+    
+    # Install System.map
+    if [ -f "${srcdir}/System.map" ]; then
+        install -Dm644 "${srcdir}/System.map" "${_builddir}/System.map"
+    fi
+    
+    # Install Module.symvers for module building
+    if [ -f "${srcdir}/Module.symvers" ]; then
+        install -Dm644 "${srcdir}/Module.symvers" "${_builddir}/Module.symvers"
+    fi
+    
+    # Install scripts for module building
+    if [ -d "${srcdir}/scripts" ]; then
+        cp -r "${srcdir}/scripts" "${_builddir}/"
+        chmod -R u+rx "${_builddir}/scripts"
+    fi
+    
+    # Install include directories
+    for dir in include/arch include/linux include/asm include/generated; do
+        if [ -d "${srcdir}/${dir}" ]; then
+            mkdir -p "${_builddir}/$(dirname ${dir})"
+            cp -r "${srcdir}/${dir}" "${_builddir}/${dir}"
+        fi
+    done
+    
+    # Fix permissions
+    chmod -R u+rwX,go+rX "${_builddir}"
+}

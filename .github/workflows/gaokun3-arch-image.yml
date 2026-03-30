@@ -1,0 +1,80 @@
+name: Build Arch Linux Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      kernel_tag:
+        description: 'Kernel tag to build (e.g., v7.0-rc5)'
+        required: true
+        default: 'v7.0-rc5'
+
+env:
+  KERNEL_TAG: ${{ inputs.kernel_tag }}
+  IMAGE_SIZE: 12G
+  GAOKUN_DIR: ${{ github.workspace }}
+  WORKDIR: ${{ github.workspace }}/work
+  ARTIFACT_DIR: ${{ github.workspace }}/artifacts
+  IMAGE_OUTPUT: ${{ github.workspace }}/output
+
+jobs:
+  build-image:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            rsync \
+            kmod \
+            curl \
+            jq \
+            parted \
+            dosfstools \
+            e2fsprogs \
+            zstd \
+            xz-utils \
+            python3 \
+            arch-install-scripts
+
+      - name: Download kernel package
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-gaokun3
+          path: ${{ env.ARTIFACT_DIR }}/packages
+
+      - name: Download modules package
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-modules-gaokun3
+          path: ${{ env.ARTIFACT_DIR }}/packages
+
+      - name: Download headers package
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-headers-gaokun3
+          path: ${{ env.ARTIFACT_DIR }}/packages
+
+      - name: Download firmware package
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-firmware-gaokun3
+          path: ${{ env.ARTIFACT_DIR }}/packages
+
+      - name: Build Arch Linux image
+        run: |
+          mkdir -p ${{ env.WORKDIR }} ${{ env.IMAGE_OUTPUT }}
+          bash scripts/ci/50_make_image_arch.sh
+
+      - name: Package release
+        run: |
+          bash scripts/ci/60_package_release_arch.sh
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokun3-arch-${{ env.KERNEL_TAG }}
+          path: ${{ env.IMAGE_OUTPUT }}/*.img.zst
+          retention-days: 14

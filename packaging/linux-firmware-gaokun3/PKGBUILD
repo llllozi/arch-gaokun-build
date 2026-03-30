@@ -1,0 +1,59 @@
+# Maintainer: Gaokun Linux Team <gaokun@example.com>
+# Contributor: Buildbot <buildbot@example.com>
+
+pkgname=linux-firmware-gaokun3
+pkgver=7.0.rc5
+pkgrel=1
+pkgdesc="Firmware files for Gaokun devices"
+arch=('aarch64')
+url="https://github.com/gaokun/linux"
+license=('GPL2' 'custom')
+depends=('linux-gaokun3')
+makedepends=()
+provides=('linux-firmware-gaokun3')
+conflicts=('linux-firmware-gaokun3-git')
+options=('!strip')  # Firmware files should not be stripped
+
+# Source will be set by buildbot during build
+source=()
+sha256sums=()
+
+prepare() {
+    # Buildbot will handle source preparation
+    :
+}
+
+build() {
+    # No build step for firmware
+    :
+}
+
+package() {
+    local _fwdir="${pkgdir}/usr/lib/firmware"
+    
+    # Create firmware directory
+    mkdir -p "${_fwdir}"
+    
+    # Install firmware files
+    if [ -d "${srcdir}/firmware" ]; then
+        cp -r "${srcdir}/firmware/"* "${_fwdir}/"
+    fi
+    
+    # Install specific device firmware if present
+    for dir in qcom mediatek rockchip; do
+        if [ -d "${srcdir}/${dir}" ]; then
+            mkdir -p "${_fwdir}/${dir}"
+            cp -r "${srcdir}/${dir}/"* "${_fwdir}/${dir}/"
+        fi
+    done
+    
+    # Fix permissions
+    find "${_fwdir}" -type f -exec chmod 644 {} \;
+    find "${_fwdir}" -type d -exec chmod 755 {} \;
+    
+    # Install license files if present
+    if [ -d "${srcdir}/licenses" ]; then
+        mkdir -p "${pkgdir}/usr/share/licenses/${pkgname}"
+        cp -r "${srcdir}/licenses/"* "${pkgdir}/usr/share/licenses/${pkgname}/"
+    fi
+}

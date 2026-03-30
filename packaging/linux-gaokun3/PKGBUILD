@@ -1,0 +1,52 @@
+# Maintainer: Gaokun Linux Team <gaokun@example.com>
+# Contributor: Buildbot <buildbot@example.com>
+
+pkgname=linux-gaokun3
+pkgver=7.0.rc5
+pkgrel=1
+pkgdesc="The Linux kernel for Gaokun devices (aarch64)"
+arch=('aarch64')
+url="https://github.com/gaokun/linux"
+license=('GPL2')
+depends=('kmod')
+makedepends=('bc' 'kmod' 'libelf' 'cpio' 'perl' 'tar' 'xz')
+provides=('linux-gaokun3')
+conflicts=('linux-gaokun3-git')
+install=linux-gaokun3.install
+
+# Source will be set by buildbot during build
+source=()
+sha256sums=()
+
+# Kernel version - will be extracted during build
+_kernver="${pkgver}-gaokun3"
+
+prepare() {
+    # Buildbot will handle source preparation
+    :
+}
+
+build() {
+    # Buildbot compiles the kernel externally
+    # This PKGBUILD is for packaging pre-built artifacts
+    :
+}
+
+package() {
+    local _kernver="${pkgver}-gaokun3"
+    
+    # Install kernel image
+    install -Dm644 "${srcdir}/vmlinuz" "${pkgdir}/boot/vmlinuz-linux-gaokun3"
+    
+    # Install device tree blobs
+    if [ -d "${srcdir}/dtbs" ]; then
+        mkdir -p "${pkgdir}/boot/dtbs/linux-gaokun3"
+        cp -r "${srcdir}/dtbs/"* "${pkgdir}/boot/dtbs/linux-gaokun3/"
+    fi
+    
+    # Install kernel config
+    install -Dm644 "${srcdir}/.config" "${pkgdir}/boot/config-linux-gaokun3"
+    
+    # Install System.map
+    install -Dm644 "${srcdir}/System.map" "${pkgdir}/boot/System.map-linux-gaokun3"
+}

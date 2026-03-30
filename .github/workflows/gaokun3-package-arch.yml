@@ -1,0 +1,78 @@
+name: Build Arch Linux Kernel Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      kernel_tag:
+        description: 'Kernel tag to build (e.g., v7.0-rc5)'
+        required: true
+        default: 'v7.0-rc5'
+
+env:
+  KERNEL_TAG: ${{ inputs.kernel_tag }}
+  GAOKUN_DIR: ${{ github.workspace }}
+  WORKDIR: ${{ github.workspace }}/work
+  KERN_SRC: ${{ github.workspace }}/linux-src
+  KERN_OUT: ${{ github.workspace }}/linux-build
+  ARTIFACT_DIR: ${{ github.workspace }}/artifacts
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git \
+            make \
+            gcc \
+            bc \
+            bison \
+            flex \
+            cpio \
+            rsync \
+            kmod \
+            libssl-dev \
+            libelf-dev \
+            dwarves \
+            ccache
+
+      - name: Checkout kernel source
+        uses: actions/checkout@v4
+        with:
+          repository: torvalds/linux
+          ref: ${{ inputs.kernel_tag }}
+          path: linux-src
+
+      - name: Build kernel packages
+        run: |
+          mkdir -p ${{ env.WORKDIR }} ${{ env.KERN_OUT }} ${{ env.ARTIFACT_DIR }}
+          bash scripts/ci/70_build_package_arch.sh
+
+      - name: Upload kernel package
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-gaokun3
+          path: ${{ env.ARTIFACT_DIR }}/linux-gaokun3-*.pkg.tar.zst
+
+      - name: Upload modules package
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-modules-gaokun3
+          path: ${{ env.ARTIFACT_DIR }}/linux-modules-gaokun3-*.pkg.tar.zst
+
+      - name: Upload headers package
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-headers-gaokun3
+          path: ${{ env.ARTIFACT_DIR }}/linux-headers-gaokun3-*.pkg.tar.zst
+
+      - name: Upload firmware package
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-firmware-gaokun3
+          path: ${{ env.ARTIFACT_DIR }}/linux-firmware-gaokun3-*.pkg.tar.zst

@@ -1,0 +1,68 @@
+# Maintainer: Gaokun Linux Team <gaokun@example.com>
+# Contributor: Buildbot <buildbot@example.com>
+
+pkgname=linux-modules-gaokun3
+pkgver=7.0.rc5
+pkgrel=1
+pkgdesc="Kernel modules for the Linux kernel for Gaokun devices"
+arch=('aarch64')
+url="https://github.com/gaokun/linux"
+license=('GPL2')
+depends=('linux-gaokun3' 'kmod')
+makedepends=('bc' 'kmod' 'libelf' 'cpio' 'perl' 'tar' 'xz')
+provides=('linux-modules-gaokun3')
+conflicts=('linux-modules-gaokun3-git')
+
+# Source will be set by buildbot during build
+source=()
+sha256sums=()
+
+# Kernel version - will be extracted during build
+_kernver="${pkgver}-gaokun3"
+
+prepare() {
+    # Buildbot will handle source preparation
+    :
+}
+
+build() {
+    # Buildbot compiles the kernel externally
+    # This PKGBUILD is for packaging pre-built artifacts
+    :
+}
+
+package() {
+    local _kernver="${pkgver}-gaokun3"
+    local _moddir="${pkgdir}/usr/lib/modules/${_kernver}"
+    
+    # Create modules directory
+    mkdir -p "${_moddir}"
+    
+    # Install kernel modules
+    if [ -d "${srcdir}/modules" ]; then
+        cp -r "${srcdir}/modules/"* "${_moddir}/"
+    fi
+    
+    # Install modules.dep, modules.alias, etc.
+    if [ -f "${srcdir}/modules.dep" ]; then
+        install -Dm644 "${srcdir}/modules.dep" "${_moddir}/modules.dep"
+    fi
+    
+    if [ -f "${srcdir}/modules.alias" ]; then
+        install -Dm644 "${srcdir}/modules.alias" "${_moddir}/modules.alias"
+    fi
+    
+    if [ -f "${srcdir}/modules.symbols" ]; then
+        install -Dm644 "${srcdir}/modules.symbols" "${_moddir}/modules.symbols"
+    fi
+    
+    # Install modules.builtin and modules.order if available
+    for file in modules.builtin modules.order; do
+        if [ -f "${srcdir}/${file}" ]; then
+            install -Dm644 "${srcdir}/${file}" "${_moddir}/${file}"
+        fi
+    done
+    
+    # Generate module dependencies
+    depmod -b "${pkgdir}/usr" -F "${srcdir}/System.map" "${_kernver}" 2>/dev/null || true
+}
